@@ -1,0 +1,29 @@
+# Java
+*.class
+*.jar
+*.war
+*.log
+*.iml
+*.ipr
+*.iws
+
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# application properties
+src/main/resources/application*.yml
+src/main/resources/application*.properties
