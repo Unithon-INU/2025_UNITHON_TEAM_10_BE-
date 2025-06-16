@@ -1,5 +1,7 @@
 package UniThon.where2throw.project.Auth;
 
+import UniThon.where2throw.project.Auth.DTO.ForgotPasswordRequest;
+import UniThon.where2throw.project.Auth.DTO.ResetPasswordRequest;
 import UniThon.where2throw.project.Global.Exception.CustomException;
 import UniThon.where2throw.project.Global.Exception.ErrorCode;
 import UniThon.where2throw.project.Global.Security.Jwt.JwtTokenProvider;
@@ -10,8 +12,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,4 +73,33 @@ public class AuthController {
         ));
     }
 
+    @PostMapping("/forgot-password")
+    @Operation(summary = "비밀번호 찾기", description = "등록된 이메일로 임시 비밀번호를 전송합니다.")
+    public ResponseEntity<CommonResponseDto<Object>> forgotPassword(@RequestBody ForgotPasswordRequest req) {
+        try {
+            authService.sendResetLink(req.email());
+            return ResponseEntity.ok(CommonResponseDto.success(Map.of("message", "임시 비밀번호가 이메일로 전송되었습니다.")));
+        } catch (MessagingException e) {
+            throw new CustomException(ErrorCode.EMAIL_SEND_FAILED);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "비밀번호 재설정", description = "로그인된 사용자가 자신의 비밀번호를 변경합니다.")
+    public ResponseEntity<CommonResponseDto<Object>> resetPassword(@RequestBody ResetPasswordRequest req, HttpServletRequest request) {
+        try {
+            String token = jwtTokenProvider.getTokenFromHeader(request);
+            if (token == null || !jwtTokenProvider.validateToken(token)) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED);
+            }
+
+            String email = jwtTokenProvider.getEmailFromToken(token);
+
+            authService.resetPassword(email, req.getNewPassword());
+
+            return ResponseEntity.ok(CommonResponseDto.success(Map.of("message", "비밀번호가 성공적으로 변경되었습니다.")));
+        } catch (CustomException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponseDto.fail(e.getMessage()));
+        }
+    }
 }

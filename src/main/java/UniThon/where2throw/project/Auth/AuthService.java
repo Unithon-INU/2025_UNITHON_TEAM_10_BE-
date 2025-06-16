@@ -5,20 +5,23 @@ import UniThon.where2throw.project.Global.Exception.ErrorCode;
 import UniThon.where2throw.project.Global.Security.Jwt.JwtTokenProvider;
 import UniThon.where2throw.project.User.UserEntity;
 import UniThon.where2throw.project.User.UserRepository;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 @Service
 public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private EmailService emailService;
 
     public void register(String email, String password) {
         if (!ValidationUtils.isValidEmail(email)) {
@@ -33,12 +36,13 @@ public class AuthService {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        UserEntity user = new UserEntity(email, passwordEncoder.encode(password));
+        String encryptedPassword = passwordEncoder.encode(password);
+        UserEntity user = new UserEntity(email, encryptedPassword);
         userRepository.save(user);
     }
 
     public String login(String email, String password) {
-        UserEntity user = (UserEntity) userRepository.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
@@ -47,5 +51,27 @@ public class AuthService {
 
         return jwtTokenProvider.createToken(user.getEmail());
     }
+    public void sendResetLink(String email) throws MessagingException {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+
+        emailService.sendTemporaryPassword(email, tempPassword);
+
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+    }
+
+    public void resetPassword(String email, String newPassword) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!ValidationUtils.isValidPassword(newPassword)) {
+            throw new CustomException(ErrorCode.PASSWORD_POLICY_VIOLATION);
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

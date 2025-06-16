@@ -31,4 +31,12 @@ public class UserEntity {
         this.password = password;
         this.provider = "local"; // 기본값
     }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
 }
