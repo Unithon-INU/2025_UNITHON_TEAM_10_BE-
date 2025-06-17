@@ -12,15 +12,24 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
 public class UserEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 50)
     private String username;
+
+    @Column(length = 100, nullable = false, unique = true)
     private String email;
-    private String provider;       // local, google, apple
-    private String providerId;
+
+    // local, google, apple
+    @Column(length = 20, nullable = false)
+    private String provider;
+
+    @Column(name = "profile_image_url", length = 255)
+    private String profileImageUrl;
+
+    @Column(length = 100)
     private String password;
 
     @Column(name = "created_at", updatable = false)
@@ -29,14 +38,18 @@ public class UserEntity {
     public UserEntity(String email, String password) {
         this.email = email;
         this.password = password;
-        this.provider = "local"; // 기본값
+        this.provider = "local";
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
-    public String getEmail() {
-        return this.email;
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
