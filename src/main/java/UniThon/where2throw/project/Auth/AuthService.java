@@ -46,7 +46,7 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+            throw new CustomException(ErrorCode.INVALID_PASSWORD, "비밀번호가 일치하지 않습니다.");
         }
 
         return jwtTokenProvider.createToken(user.getEmail());

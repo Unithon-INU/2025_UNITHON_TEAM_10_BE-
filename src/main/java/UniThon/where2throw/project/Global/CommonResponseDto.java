@@ -23,4 +23,12 @@ public class CommonResponseDto<T> {
     public static <T> CommonResponseDto<T> fail(String status, String message) {
         return new CommonResponseDto<>(status, message, null);
     }
+
+    public static <T> CommonResponseDto<T> fail(int httpStatusCode, String message) {
+        return new CommonResponseDto<>(
+                String.valueOf(httpStatusCode),
+                message,
+                null
+        );
+    }
 }
