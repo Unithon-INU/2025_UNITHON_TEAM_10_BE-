@@ -13,8 +13,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/posts")
 public class PostController {
-
     private final PostService postService;
+    private final CommentService commentService;
 
     @PostMapping("/{category}/write")
     public ResponseEntity<CommonResponseDto<CreatePostResponse>> write(
@@ -49,6 +49,7 @@ public class PostController {
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
 
+
     @PutMapping("/{postId}")
     public ResponseEntity<CommonResponseDto<Object>> edit(
             @PathVariable Long postId,
@@ -81,4 +82,26 @@ public class PostController {
         ));
     }
 
+    //댓글
+    @PostMapping("/{category}/{postId}/comments")
+    public ResponseEntity<CommonResponseDto<CommentDto>> createComment(
+            @PathVariable Long postId,
+            @RequestBody CreateCommentRequest req,
+            Principal principal
+    ) {
+        String email = principal.getName();
+        CommentDto dto = commentService.create(email, postId, req);
+        return ResponseEntity.ok(CommonResponseDto.success(dto));
+    }
+
+    @DeleteMapping("/{category}/{postId}/comments/{commentId}")
+    public ResponseEntity<CommonResponseDto<Void>> deleteComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            Principal principal
+    ) {
+        String email = principal.getName();
+        commentService.delete(email, commentId);
+        return ResponseEntity.ok(CommonResponseDto.success(null));
+    }
 }

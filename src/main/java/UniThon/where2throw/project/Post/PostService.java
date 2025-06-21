@@ -101,7 +101,7 @@ public class PostService {
                 .map(PostImage::getImageUrl)
                 .toList();
 
-        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtAsc(postId).stream()
+        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtDesc(postId).stream()
                 .map(c -> new CommentDto(
                         c.getId(),
                         c.getAuthor().getUsername(),
