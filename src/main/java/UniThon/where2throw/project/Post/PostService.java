@@ -192,4 +192,41 @@ public class PostService {
 
         postRepo.delete(post);
     }
+
+    @Transactional(readOnly = true)
+    public PostListResponse listPosts(
+            String category,
+            String keyword,
+            int page,
+            int pageSize
+    ) {
+        Pageable pageable = PageRequest.of(
+                page - 1, pageSize,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<PostEntity> p;
+        if (StringUtils.hasText(keyword)) {
+            p = postRepo.searchByKeyword(category, keyword, pageable);
+        } else {
+            p = postRepo.findByCategory(category, pageable);
+        }
+
+        List<PostSummaryDto> list = p.getContent().stream()
+                .map(post -> new PostSummaryDto(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getAuthor().getUsername(),
+                        post.getCreatedAt(),
+                        post.getViewCount()
+                ))
+                .toList();
+
+        return new PostListResponse(
+                list,
+                p.getTotalElements(),
+                p.getTotalPages(),
+                p.getNumber() + 1
+        );
+    }
 }

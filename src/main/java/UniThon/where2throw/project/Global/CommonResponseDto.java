@@ -1,10 +1,12 @@
 package UniThon.where2throw.project.Global;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommonResponseDto<T> {

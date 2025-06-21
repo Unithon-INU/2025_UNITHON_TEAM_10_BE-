@@ -3,7 +3,9 @@ package UniThon.where2throw.project.Post;
 import UniThon.where2throw.project.Global.CommonResponseDto;
 import UniThon.where2throw.project.Post.DTO.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -30,10 +32,22 @@ public class PostController {
     @GetMapping("/{category}")
     public ResponseEntity<CommonResponseDto<PostListResponse>> list(
             @PathVariable String category,
-            @RequestParam(defaultValue = "1")    int page,
-            @RequestParam(defaultValue = "10")   int pageSize
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize
     ) {
-        PostListResponse dto = postService.listPosts(category, page, pageSize);
+        PostListResponse dto = postService.listPosts(category, keyword, page, pageSize);
+
+        if (StringUtils.hasText(keyword) && dto.getPosts().isEmpty()) {
+            return ResponseEntity.ok(
+                    CommonResponseDto.<PostListResponse>builder()
+                            .status(String.valueOf(HttpStatus.OK.value()))
+                            .message("검색 결과가 없습니다.")
+                            .data(dto)
+                            .build()
+            );
+        }
+
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
 
