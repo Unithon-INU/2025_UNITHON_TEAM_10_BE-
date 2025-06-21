@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -63,17 +64,14 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostListResponse listPosts(String category, int page, int pageSize) {
-        // (1) 페이지 요청 (0-base) + 최신순 정렬
         Pageable pageable = PageRequest.of(
                 page - 1,
                 pageSize,
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        // (2) DB 조회
         Page<PostEntity> p = postRepo.findByCategory(category, pageable);
 
-        // (3) DTO 매핑: 제목/작성자/작성일/조회수만
         List<PostSummaryDto> list = p.getContent().stream()
                 .map(post -> new PostSummaryDto(
                         post.getId(),
@@ -84,7 +82,6 @@ public class PostService {
                 ))
                 .toList();
 
-        // (4) 페이지 정보 담아서 반환
         return new PostListResponse(
                 list,
                 p.getTotalElements(),
@@ -123,5 +120,76 @@ public class PostService {
                 imgs,
                 comments
         );
+    }
+
+    @Transactional
+    public void updatePost(Long postId, UpdatePostRequest req) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity me = userRepo.findByEmail(currentEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
+        PostEntity post = postRepo.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        if (!post.getAuthor().getId().equals(me.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN); // 403
+        }
+
+        if (StringUtils.isEmpty(req.getTitle()) || req.getTitle().length() > 100) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "제목은 1~100자여야 합니다.");
+        }
+        if (StringUtils.isEmpty(req.getContent()) || req.getContent().length() > 5000) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "내용은 1~5000자여야 합니다.");
+        }
+        if (req.getImages() != null && req.getImages().size() > 5) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "이미지는 최대 5개까지 업로드 가능합니다.");
+        }
+
+        post.setTitle(req.getTitle());
+        post.setContent(req.getContent());
+
+        post.getImages().clear();
+        if (req.getImages() != null) {
+            for (String url : req.getImages()) {
+                if (StringUtils.isEmpty(url)) continue;
+                PostImage img = new PostImage(url);
+                post.addImage(img);
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public EditPostResponse getPostForEdit(String email, Long postId) {
+        PostEntity post = postRepo.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if (!post.getAuthor().getEmail().equals(email)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        List<String> urls = post.getImages().stream()
+                .map(PostImage::getImageUrl)
+                .toList();
+
+        return new EditPostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                urls
+        );
+    }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity me = userRepo.findByEmail(currentEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
+        PostEntity post = postRepo.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        if (!post.getAuthor().getId().equals(me.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN); // 403
+        }
+
+        postRepo.delete(post);
     }
 }

@@ -1,15 +1,13 @@
 package UniThon.where2throw.project.Post;
 
 import UniThon.where2throw.project.Global.CommonResponseDto;
-import UniThon.where2throw.project.Post.DTO.CreatePostRequest;
-import UniThon.where2throw.project.Post.DTO.CreatePostResponse;
-import UniThon.where2throw.project.Post.DTO.PostDetailResponse;
-import UniThon.where2throw.project.Post.DTO.PostListResponse;
+import UniThon.where2throw.project.Post.DTO.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,4 +48,37 @@ public class PostController {
                 postService.getPostDetail(postId, email);
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<CommonResponseDto<Object>> edit(
+            @PathVariable Long postId,
+            @RequestBody UpdatePostRequest req
+    ) {
+        postService.updatePost(postId, req);
+        return ResponseEntity.ok(CommonResponseDto.success(
+                Map.of("message", "게시글이 성공적으로 수정되었습니다.")
+        ));
+    }
+
+    @GetMapping("/{category}/{postId}/edit")
+    public ResponseEntity<CommonResponseDto<EditPostResponse>> getEditPost(
+            @PathVariable String category,
+            @PathVariable Long postId,
+            Principal principal
+    ) {
+        String email = principal.getName();
+        EditPostResponse dto = postService.getPostForEdit(email, postId);
+        return ResponseEntity.ok(CommonResponseDto.success(dto));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<CommonResponseDto<Object>> remove(
+            @PathVariable Long postId
+    ) {
+        postService.deletePost(postId);
+        return ResponseEntity.ok(CommonResponseDto.success(
+                Map.of("message", "게시글이 성공적으로 삭제되었습니다.")
+        ));
+    }
+
 }
