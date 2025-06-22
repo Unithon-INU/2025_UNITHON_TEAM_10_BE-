@@ -10,11 +10,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -62,25 +64,45 @@ public class PostService {
         return new CreatePostResponse(post.getId());
     }
 
+
     @Transactional(readOnly = true)
-    public PostListResponse listPosts(String category, int page, int pageSize) {
-        Pageable pageable = PageRequest.of(
-                page - 1,
-                pageSize,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+    public PostListResponse listPosts(
+            String category,
+            String keyword,
+            String dateRange,
+            String sortBy,
+            int page,
+            int pageSize
+    ) {
+        // 1) 날짜 필터 스펙
+        Specification<PostEntity> spec = Specification
+                .where(categoryEquals(category))
+                .and(keyword != null && !keyword.isBlank() ? keywordContains(keyword) : null)
+                .and(dateRangeFilter(dateRange));
 
-        Page<PostEntity> p = postRepo.findByCategory(category, pageable);
+        // 2) 정렬
+        Sort sort = switch (sortBy) {
+            case "views"    -> Sort.by(Sort.Direction.DESC, "viewCount");
+            case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size"); // 댓글 컬렉션 사이즈로 정렬
+            default         -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
 
-        List<PostSummaryDto> list = p.getContent().stream()
-                .map(post -> new PostSummaryDto(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getAuthor().getUsername(),
-                        post.getCreatedAt(),
-                        post.getViewCount()
-                ))
-                .toList();
+        Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
+
+        // 3) 페이징 + Specification 조회
+        Page<PostEntity> p = postRepo.findAll(spec, pageable);
+
+        // 4) DTO 변환
+        List<PostSummaryDto> list = p.getContent().stream().map(post -> {
+            boolean isAuthor = false; // 필요 시 비교로 세팅
+            return new PostSummaryDto(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getAuthor().getUsername(),
+                    post.getCreatedAt(),
+                    post.getViewCount()
+            );
+        }).toList();
 
         return new PostListResponse(
                 list,
@@ -90,6 +112,41 @@ public class PostService {
         );
     }
 
+    private Specification<PostEntity> categoryEquals(String category) {
+        return (root, cq, cb) -> cb.equal(root.get("category"), category);
+    }
+
+    private Specification<PostEntity> keywordContains(String kw) {
+        return (root, cq, cb) -> {
+            String pattern = "%" + kw.trim() + "%";
+            return cb.or(
+                    cb.like(root.get("title"), pattern),
+                    cb.like(root.get("content"), pattern),
+                    cb.like(root.get("author").get("username"), pattern)
+            );
+        };
+    }
+
+    private Specification<PostEntity> dateRangeFilter(String range) {
+        return (root, cq, cb) -> {
+            LocalDateTime from;
+            switch (range) {
+                case "today"    -> from = LocalDateTime.now().toLocalDate().atStartOfDay();
+                case "week"     -> from = LocalDateTime.now().minusWeeks(1);
+                case "month"    -> from = LocalDateTime.now().minusMonths(1);
+                case "3months"  -> from = LocalDateTime.now().minusMonths(3);
+                default         -> from = LocalDateTime.of(1970,1,1,0,0);
+            }
+            return cb.greaterThanOrEqualTo(root.get("createdAt"), from);
+        };
+    }
+
+    private String abbreviate(String content) {
+        if (content == null) return "";
+        return content.length() <= 50
+                ? content
+                : content.substring(0, 50) + "...";
+    }
     @Transactional
     public PostDetailResponse getPostDetail(Long postId, String currentEmail) {
         PostEntity post = postRepo.findById(postId)
@@ -191,42 +248,5 @@ public class PostService {
         }
 
         postRepo.delete(post);
-    }
-
-    @Transactional(readOnly = true)
-    public PostListResponse listPosts(
-            String category,
-            String keyword,
-            int page,
-            int pageSize
-    ) {
-        Pageable pageable = PageRequest.of(
-                page - 1, pageSize,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-
-        Page<PostEntity> p;
-        if (StringUtils.hasText(keyword)) {
-            p = postRepo.searchByKeyword(category, keyword, pageable);
-        } else {
-            p = postRepo.findByCategory(category, pageable);
-        }
-
-        List<PostSummaryDto> list = p.getContent().stream()
-                .map(post -> new PostSummaryDto(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getAuthor().getUsername(),
-                        post.getCreatedAt(),
-                        post.getViewCount()
-                ))
-                .toList();
-
-        return new PostListResponse(
-                list,
-                p.getTotalElements(),
-                p.getTotalPages(),
-                p.getNumber() + 1
-        );
     }
 }
