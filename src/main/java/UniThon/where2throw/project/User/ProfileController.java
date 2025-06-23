@@ -23,7 +23,7 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping
+    @GetMapping("/profile")
     @Operation(summary = "내 프로필 조회", description = "로그인된 사용자의 프로필 정보를 반환합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공")
@@ -33,7 +33,7 @@ public class ProfileController {
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
 
-    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(path = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "내 프로필 수정", description = "닉네임과 프로필 이미지를 변경합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),

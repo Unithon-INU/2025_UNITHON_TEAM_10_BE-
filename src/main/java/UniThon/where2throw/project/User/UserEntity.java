@@ -1,11 +1,14 @@
 package UniThon.where2throw.project.User;
 
+import UniThon.where2throw.project.UserDashboard.BadgeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -31,6 +34,9 @@ public class UserEntity {
 
     @Column(length = 100)
     private String password;
+
+    @ManyToMany(mappedBy = "users")
+    private Set<BadgeEntity> badges = new HashSet<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
