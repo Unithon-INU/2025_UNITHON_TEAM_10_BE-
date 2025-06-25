@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +73,8 @@ public class PostService {
             String dateRange,
             String sortBy,
             int page,
-            int pageSize
+            int pageSize,
+            String currentEmail
     ) {
         // 1) 날짜 필터 스펙
         Specification<PostEntity> spec = Specification
@@ -83,7 +85,7 @@ public class PostService {
         // 2) 정렬
         Sort sort = switch (sortBy) {
             case "views" -> Sort.by(Sort.Direction.DESC, "viewCount");
-            case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size"); // 댓글 컬렉션 사이즈로 정렬
+            case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size");
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
 
@@ -92,15 +94,23 @@ public class PostService {
         // 3) 페이징 + Specification 조회
         Page<PostEntity> p = postRepo.findAll(spec, pageable);
 
-        // 4) DTO 변환
+        Function<String,String> abbreviate = content -> {
+            if (content == null) return "";
+            return content.length() <= 100
+                    ? content
+                    : content.substring(0, 100) + "...";
+        };
+
         List<PostSummaryDto> list = p.getContent().stream().map(post -> {
-            boolean isAuthor = false; // 필요 시 비교로 세팅
+            boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
             return new PostSummaryDto(
                     post.getId(),
                     post.getTitle(),
+                    abbreviate.apply(post.getContent()),
                     post.getAuthor().getUsername(),
                     post.getCreatedAt(),
-                    post.getViewCount()
+                    post.getViewCount(),
+                    isAuthor
             );
         }).toList();
 
@@ -149,25 +159,33 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPostDetail(Long postId, String currentEmail, Boolean isRefetch) {
+    public PostDetailResponse getPostDetail(Long postId, String currentEmail) {
         PostEntity post = postRepo.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT, "게시글이 없습니다."));
 
-        if (!isRefetch)
-            post.incrementView();
+        post.incrementView();
 
         List<String> imgs = post.getImages().stream()
                 .map(PostImage::getImageUrl)
                 .toList();
 
-        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtAsc(postId).stream()
-                .map(c -> new CommentDto(
-                        c.getId(),
-                        c.getAuthor().getUsername(),
-                        c.getContent(),
-                        c.getCreatedAt()
-                ))
+        List<CommentDto> comments = commentRepo
+                .findByPostIdOrderByCreatedAtDesc(postId)
+                .stream()
+                .map(c -> {
+                    boolean isAuthor = currentEmail != null
+                            && c.getAuthor().getEmail().equals(currentEmail);
+                    return new CommentDto(
+                            c.getId(),
+                            c.getAuthor().getUsername(),
+                            c.getContent(),
+                            c.getCreatedAt(),
+                            isAuthor
+                    );
+                })
                 .toList();
+
+        boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
 
         return new PostDetailResponse(
                 post.getId(),
@@ -177,7 +195,8 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getViewCount(),
                 imgs,
-                comments
+                comments,
+                isAuthor
         );
     }
 

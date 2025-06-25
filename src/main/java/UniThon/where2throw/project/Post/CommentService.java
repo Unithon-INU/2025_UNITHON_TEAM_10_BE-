@@ -36,7 +36,8 @@ public class CommentService {
                 saved.getId(),
                 saved.getAuthor().getUsername(),
                 saved.getContent(),
-                saved.getCreatedAt()
+                saved.getCreatedAt(),
+                true
         );
     }
 

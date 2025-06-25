@@ -12,4 +12,5 @@ public class PostListResponse {
     private long totalCount;
     private int totalPages;
     private int currentPage;
+
 }

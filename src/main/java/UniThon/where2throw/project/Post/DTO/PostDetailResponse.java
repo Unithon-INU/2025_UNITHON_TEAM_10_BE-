@@ -17,4 +17,5 @@ public class PostDetailResponse {
     private int viewCnt;
     private List<String> imageUrls;
     private List<CommentDto> comments;
+    private boolean isAuthor;
 }

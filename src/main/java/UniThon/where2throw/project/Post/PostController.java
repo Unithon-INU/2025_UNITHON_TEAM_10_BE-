@@ -70,10 +70,14 @@ public class PostController {
             @RequestParam(defaultValue = "1") int page,
 
             @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam(defaultValue = "10") int pageSize
+            @RequestParam(defaultValue = "10") int pageSize,
+
+            Principal principal
     ) {
+        String email = principal != null ? principal.getName() : null;
+
         PostListResponse dto = postService.listPosts(
-                category, keyword, dateRange, sortBy, page, pageSize
+                category, keyword, dateRange, sortBy, page, pageSize, email
         );
 
         if (StringUtils.hasText(keyword) && dto.getPosts().isEmpty()) {
@@ -88,6 +92,7 @@ public class PostController {
 
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
+
 
     @GetMapping("/{category}/{postId}")
     @Operation(summary = "게시글 상세 조회", description = "게시글의 내용을 조회하고 조회수를 1 증가시킵니다.")
