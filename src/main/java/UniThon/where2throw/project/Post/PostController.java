@@ -100,10 +100,12 @@ public class PostController {
             @PathVariable String category,
             @Parameter(description = "게시글 ID", example = "123")
             @PathVariable Long postId,
+            @Parameter(description = "재요청 여부", example = "false")
+            @RequestParam(defaultValue = "false") Boolean isRefetch,
             Principal principal
     ) {
         String email = principal.getName();
-        PostDetailResponse dto = postService.getPostDetail(postId, email);
+        PostDetailResponse dto = postService.getPostDetail(postId, email, isRefetch);
         return ResponseEntity.ok(CommonResponseDto.success(dto));
     }
 

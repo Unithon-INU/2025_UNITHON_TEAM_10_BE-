@@ -149,17 +149,18 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPostDetail(Long postId, String currentEmail) {
+    public PostDetailResponse getPostDetail(Long postId, String currentEmail, Boolean isRefetch) {
         PostEntity post = postRepo.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT, "게시글이 없습니다."));
 
-        post.incrementView();
+        if (!isRefetch)
+            post.incrementView();
 
         List<String> imgs = post.getImages().stream()
                 .map(PostImage::getImageUrl)
                 .toList();
 
-        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtDesc(postId).stream()
+        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtAsc(postId).stream()
                 .map(c -> new CommentDto(
                         c.getId(),
                         c.getAuthor().getUsername(),
