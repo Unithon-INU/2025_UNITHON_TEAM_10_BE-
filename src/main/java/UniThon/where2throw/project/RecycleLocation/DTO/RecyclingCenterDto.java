@@ -15,6 +15,5 @@ public class RecyclingCenterDto {
     private String address;
     private BigDecimal latitude;
     private BigDecimal longitude;
-    private List<String> wasteTypes;
-    private List<String> specialWasteTypes;
+    private String specialWasteType;
 }

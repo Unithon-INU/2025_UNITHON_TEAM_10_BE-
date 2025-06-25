@@ -24,10 +24,5 @@ public class RecycleLocationEntity {
 
     @Column(name = "source_id")
     private String sourceId;
-
-    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<RecycleLocationWasteTypeEntity> wasteTypes;
-
-    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<RecycleLocationSpecialWasteTypeEntity> specialWasteTypes;
+    private String specialWasteType;
 }

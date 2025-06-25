@@ -20,15 +20,7 @@ public class RecyclingCenterService {
                         loc.getAddress(),
                         loc.getLatitude(),
                         loc.getLongitude(),
-
-                        loc.getWasteTypes()
-                                .stream()
-                                .map(e -> e.getWasteType())
-                                .collect(Collectors.toList()),
-                        loc.getSpecialWasteTypes()
-                                .stream()
-                                .map(e -> e.getSpecialWasteType())
-                                .collect(Collectors.toList())
+                        loc.getSpecialWasteType()
                 ))
                 .collect(Collectors.toList());
     }
