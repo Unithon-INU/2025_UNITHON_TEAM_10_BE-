@@ -7,10 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user_dashboard")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class UserDashboardEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

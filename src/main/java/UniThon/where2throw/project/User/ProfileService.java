@@ -64,4 +64,12 @@ public class ProfileService {
 
         return new ProfileResponse(u.getUsername(), u.getProfileImageUrl());
     }
+
+    @Transactional
+    public long addPoints(String email, long points) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        user.setPoints(user.getPoints() + points);
+        return user.getPoints();
+    }
 }

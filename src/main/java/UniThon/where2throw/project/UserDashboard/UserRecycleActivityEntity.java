@@ -7,10 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user_recycle_activity")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class UserRecycleActivityEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

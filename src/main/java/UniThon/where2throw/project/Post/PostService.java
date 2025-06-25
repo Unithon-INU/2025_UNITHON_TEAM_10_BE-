@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +65,6 @@ public class PostService {
         return new CreatePostResponse(post.getId());
     }
 
-
     @Transactional(readOnly = true)
     public PostListResponse listPosts(
             String category,
@@ -76,7 +76,7 @@ public class PostService {
     ) {
         // 1) 날짜 필터 스펙
         Specification<PostEntity> spec = Specification
-                .where(categoryEquals(category))
+                .where(!Objects.equals(category, "all") ? categoryEquals(category) : null)
                 .and(keyword != null && !keyword.isBlank() ? keywordContains(keyword) : null)
                 .and(dateRangeFilter(dateRange));
 
