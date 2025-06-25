@@ -170,7 +170,7 @@ public class PostService {
                 .toList();
 
         List<CommentDto> comments = commentRepo
-                .findByPostIdOrderByCreatedAtDesc(postId)
+                .findByPostIdOrderByCreatedAtAsc(postId)
                 .stream()
                 .map(c -> {
                     boolean isAuthor = currentEmail != null
@@ -185,7 +185,7 @@ public class PostService {
                 })
                 .toList();
 
-        boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
+        boolean isAuthor = post.getAuthor().getEmail().equals(currentEmail);
 
         return new PostDetailResponse(
                 post.getId(),
