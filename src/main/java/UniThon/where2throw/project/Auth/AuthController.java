@@ -38,7 +38,7 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<CommonResponseDto<Object>> register(@RequestBody RegisterRequest req) {
-        authService.register(req.email(), req.password());
+        authService.register(req.email(), req.password(), req.username());
         return ResponseEntity.ok(CommonResponseDto.success(
                 Map.of("message", "회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.")
         ));

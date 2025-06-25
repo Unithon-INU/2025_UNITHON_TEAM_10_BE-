@@ -23,7 +23,7 @@ public class AuthService {
     @Autowired
     private EmailService emailService;
 
-    public void register(String email, String password) {
+    public void register(String email, String password, String username) {
         if (!ValidationUtils.isValidEmail(email)) {
             throw new CustomException(ErrorCode.EMAIL_INVALID);
         }
@@ -37,7 +37,7 @@ public class AuthService {
         }
 
         String encryptedPassword = passwordEncoder.encode(password);
-        UserEntity user = new UserEntity(email, encryptedPassword);
+        UserEntity user = new UserEntity(email, encryptedPassword, username);
         userRepository.save(user);
     }
 

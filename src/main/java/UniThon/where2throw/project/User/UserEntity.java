@@ -41,9 +41,10 @@ public class UserEntity {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public UserEntity(String email, String password) {
+    public UserEntity(String email, String password, String username) {
         this.email = email;
         this.password = password;
+        this.username = username;
         this.provider = "local";
     }
 
