@@ -12,4 +12,5 @@ public class CommentDto {
     private String author;
     private String content;
     private LocalDateTime createdAt;
+    private boolean isAuthor;
 }

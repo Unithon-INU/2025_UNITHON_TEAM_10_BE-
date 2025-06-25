@@ -13,4 +13,5 @@ public class PostSummaryDto {
     private String     author;
     private LocalDateTime createdAt;
     private int        viewCnt;
+    private boolean    isAuthor;
 }

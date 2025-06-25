@@ -72,35 +72,33 @@ public class PostService {
             String dateRange,
             String sortBy,
             int page,
-            int pageSize
+            int pageSize,
+            String currentEmail
     ) {
-        // 1) 날짜 필터 스펙
         Specification<PostEntity> spec = Specification
                 .where(!Objects.equals(category, "all") ? categoryEquals(category) : null)
                 .and(keyword != null && !keyword.isBlank() ? keywordContains(keyword) : null)
                 .and(dateRangeFilter(dateRange));
 
-        // 2) 정렬
         Sort sort = switch (sortBy) {
             case "views" -> Sort.by(Sort.Direction.DESC, "viewCount");
-            case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size"); // 댓글 컬렉션 사이즈로 정렬
+            case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size");
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
 
         Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
 
-        // 3) 페이징 + Specification 조회
         Page<PostEntity> p = postRepo.findAll(spec, pageable);
 
-        // 4) DTO 변환
         List<PostSummaryDto> list = p.getContent().stream().map(post -> {
-            boolean isAuthor = false; // 필요 시 비교로 세팅
+            boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
             return new PostSummaryDto(
                     post.getId(),
                     post.getTitle(),
                     post.getAuthor().getUsername(),
                     post.getCreatedAt(),
-                    post.getViewCount()
+                    post.getViewCount(),
+                    isAuthor
             );
         }).toList();
 
@@ -159,14 +157,23 @@ public class PostService {
                 .map(PostImage::getImageUrl)
                 .toList();
 
-        List<CommentDto> comments = commentRepo.findByPostIdOrderByCreatedAtDesc(postId).stream()
-                .map(c -> new CommentDto(
-                        c.getId(),
-                        c.getAuthor().getUsername(),
-                        c.getContent(),
-                        c.getCreatedAt()
-                ))
+        List<CommentDto> comments = commentRepo
+                .findByPostIdOrderByCreatedAtDesc(postId)
+                .stream()
+                .map(c -> {
+                    boolean isAuthor = currentEmail != null
+                            && c.getAuthor().getEmail().equals(currentEmail);
+                    return new CommentDto(
+                            c.getId(),
+                            c.getAuthor().getUsername(),
+                            c.getContent(),
+                            c.getCreatedAt(),
+                            isAuthor
+                    );
+                })
                 .toList();
+
+        boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
 
         return new PostDetailResponse(
                 post.getId(),
@@ -176,7 +183,8 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getViewCount(),
                 imgs,
-                comments
+                comments,
+                isAuthor
         );
     }
 
