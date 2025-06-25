@@ -94,7 +94,7 @@ public class PostService {
         // 3) 페이징 + Specification 조회
         Page<PostEntity> p = postRepo.findAll(spec, pageable);
 
-        Function<String,String> abbreviate = content -> {
+        Function<String, String> abbreviate = content -> {
             if (content == null) return "";
             return content.length() <= 100
                     ? content
@@ -159,11 +159,12 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPostDetail(Long postId, String currentEmail) {
+    public PostDetailResponse getPostDetail(Long postId, String currentEmail, Boolean isRefetch) {
         PostEntity post = postRepo.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT, "게시글이 없습니다."));
 
-        post.incrementView();
+        if (!isRefetch)
+            post.incrementView();
 
         List<String> imgs = post.getImages().stream()
                 .map(PostImage::getImageUrl)
