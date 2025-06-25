@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -90,11 +91,19 @@ public class PostService {
 
         Page<PostEntity> p = postRepo.findAll(spec, pageable);
 
+        Function<String,String> abbreviate = content -> {
+            if (content == null) return "";
+            return content.length() <= 100
+                    ? content
+                    : content.substring(0, 100) + "...";
+        };
+
         List<PostSummaryDto> list = p.getContent().stream().map(post -> {
             boolean isAuthor = currentEmail != null && post.getAuthor().getEmail().equals(currentEmail);
             return new PostSummaryDto(
                     post.getId(),
                     post.getTitle(),
+                    abbreviate.apply(post.getContent()),
                     post.getAuthor().getUsername(),
                     post.getCreatedAt(),
                     post.getViewCount(),

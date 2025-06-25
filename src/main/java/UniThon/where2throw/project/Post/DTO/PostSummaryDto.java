@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class PostSummaryDto {
     private Long       id;
     private String     title;
+    private String     snippet;
     private String     author;
     private LocalDateTime createdAt;
     private int        viewCnt;
