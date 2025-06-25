@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -76,15 +77,15 @@ public class PostService {
     ) {
         // 1) 날짜 필터 스펙
         Specification<PostEntity> spec = Specification
-                .where(categoryEquals(category))
+                .where(!Objects.equals(category, "all") ? categoryEquals(category) : null)
                 .and(keyword != null && !keyword.isBlank() ? keywordContains(keyword) : null)
                 .and(dateRangeFilter(dateRange));
 
         // 2) 정렬
         Sort sort = switch (sortBy) {
-            case "views"    -> Sort.by(Sort.Direction.DESC, "viewCount");
+            case "views" -> Sort.by(Sort.Direction.DESC, "viewCount");
             case "comments" -> Sort.by(Sort.Direction.DESC, "comments.size"); // 댓글 컬렉션 사이즈로 정렬
-            default         -> Sort.by(Sort.Direction.DESC, "createdAt");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
 
         Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
@@ -131,11 +132,11 @@ public class PostService {
         return (root, cq, cb) -> {
             LocalDateTime from;
             switch (range) {
-                case "today"    -> from = LocalDateTime.now().toLocalDate().atStartOfDay();
-                case "week"     -> from = LocalDateTime.now().minusWeeks(1);
-                case "month"    -> from = LocalDateTime.now().minusMonths(1);
-                case "3months"  -> from = LocalDateTime.now().minusMonths(3);
-                default         -> from = LocalDateTime.of(1970,1,1,0,0);
+                case "today" -> from = LocalDateTime.now().toLocalDate().atStartOfDay();
+                case "week" -> from = LocalDateTime.now().minusWeeks(1);
+                case "month" -> from = LocalDateTime.now().minusMonths(1);
+                case "3months" -> from = LocalDateTime.now().minusMonths(3);
+                default -> from = LocalDateTime.of(1970, 1, 1, 0, 0);
             }
             return cb.greaterThanOrEqualTo(root.get("createdAt"), from);
         };
@@ -147,6 +148,7 @@ public class PostService {
                 ? content
                 : content.substring(0, 50) + "...";
     }
+
     @Transactional
     public PostDetailResponse getPostDetail(Long postId, String currentEmail) {
         PostEntity post = postRepo.findById(postId)
