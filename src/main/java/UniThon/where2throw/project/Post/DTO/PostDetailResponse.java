@@ -14,7 +14,7 @@ public class PostDetailResponse {
     private String content;
     private String author;
     private LocalDateTime createdAt;
-    private int viewCount;
+    private int viewCnt;
     private List<String> imageUrls;
     private List<CommentDto> comments;
 }
