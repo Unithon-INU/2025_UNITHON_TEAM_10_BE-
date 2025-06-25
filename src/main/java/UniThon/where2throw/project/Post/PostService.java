@@ -65,7 +65,6 @@ public class PostService {
         return new CreatePostResponse(post.getId());
     }
 
-
     @Transactional(readOnly = true)
     public PostListResponse listPosts(
             String category,

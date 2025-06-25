@@ -38,6 +38,9 @@ public class UserEntity {
     @ManyToMany(mappedBy = "users")
     private Set<BadgeEntity> badges = new HashSet<>();
 
+    @Column(nullable = false)
+    private Long points = 0L;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -58,5 +61,9 @@ public class UserEntity {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setPoints(Long points) {
+        this.points = points;
     }
 }
