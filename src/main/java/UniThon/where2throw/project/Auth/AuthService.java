@@ -36,6 +36,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
+        if (userRepository.existsByUsername(username)) {
+            throw new CustomException(ErrorCode.USERNAME_DUPLICATED);
+        }
+
         String encryptedPassword = passwordEncoder.encode(password);
         UserEntity user = new UserEntity(email, encryptedPassword, username);
         userRepository.save(user);
