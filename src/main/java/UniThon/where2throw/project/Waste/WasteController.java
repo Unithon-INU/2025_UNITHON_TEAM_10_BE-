@@ -1,6 +1,7 @@
 package UniThon.where2throw.project.Waste;
 
 import UniThon.where2throw.project.Global.CommonResponseDto;
+import UniThon.where2throw.project.Waste.DTO.RecycleResultDto;
 import UniThon.where2throw.project.Waste.DTO.WasteDto;
 import UniThon.where2throw.project.Waste.DTO.WasteSearchDto;
 import UniThon.where2throw.project.Waste.DTO.ClassificationRequest;
@@ -56,7 +57,7 @@ public class WasteController {
 
     @PostMapping("/{type}")
     @Operation(summary = "재활용 처리", description = "재활용 품목 타입과 개수를 넘기면, 개수×5점만큼 포인트를 적립하고 현재 점수를 반환합니다.")
-    public ResponseEntity<CommonResponseDto<Long>> recycle(
+    public ResponseEntity<CommonResponseDto<RecycleResultDto>> recycle(
             @Parameter(description = "재활용 품목 타입", example = "plastic")
             @PathVariable String type,
             @Parameter(description = "재활용한 개수", example = "3")
@@ -64,7 +65,7 @@ public class WasteController {
             Principal principal
     ) {
         String email = principal.getName();
-        long currentScore = wasteService.recycle(email, quantity);
-        return ResponseEntity.ok(CommonResponseDto.success(currentScore));
+        RecycleResultDto recycleResult = wasteService.recycle(email, type, quantity);
+        return ResponseEntity.ok(CommonResponseDto.success(recycleResult));
     }
 }

@@ -4,12 +4,14 @@ import UniThon.where2throw.project.Global.Exception.CustomException;
 import UniThon.where2throw.project.Global.Exception.ErrorCode;
 import UniThon.where2throw.project.User.ProfileService;
 import UniThon.where2throw.project.UserDashboard.MyPageService;
+import UniThon.where2throw.project.Waste.DTO.RecycleResultDto;
 import UniThon.where2throw.project.Waste.DTO.WasteDto;
 import UniThon.where2throw.project.Waste.DTO.WasteSearchDto;
 import UniThon.where2throw.project.Waste.DTO.ClassificationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -33,13 +35,26 @@ public class WasteService {
     }
 
     @Transactional
-    public long recycle(String email, int quantity) {
+    public RecycleResultDto recycle(String email, String type, int quantity) {
         long pointsToAdd = (long) quantity * 5;
-        return profileService.addPoints(email, pointsToAdd);
+        WasteDto w = classify(type);
+
+        return new RecycleResultDto(pointsToAdd, w);
     }
 
     @Transactional
-    public WasteDto classify(String id, ClassificationRequest req) {
+    public WasteDto classify(String wasteId) {
+        WasteEntity w = wasteRepo.findById(wasteId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        return new WasteDto(
+                w.getId(), w.getName(), w.getDisposalMethod(), w.getCreatedByAi()
+        );
+    }
+
+
+    @Transactional
+    public WasteDto correctWasteInfo(String id, ClassificationRequest req) {
         WasteEntity w = wasteRepo.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
         w.changeName(req.getName());
@@ -47,7 +62,7 @@ public class WasteService {
         w.markCreatedByAi();
         wasteRepo.save(w);
         return new WasteDto(
-                w.getId(), w.getName(),  w.getDisposalMethod(), w.getCreatedByAi()
+                w.getId(), w.getName(), w.getDisposalMethod(), w.getCreatedByAi()
         );
     }
 }

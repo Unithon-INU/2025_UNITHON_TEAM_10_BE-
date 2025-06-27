@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class MyPageService {
 
         // 2) 대시보드 요약
         UserDashboardEntity dash = dashRepo.findByUserId(user.getId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElse(new UserDashboardEntity());
 
         // 3) 사용자 기본정보 & 레벨
         int level = (int)(dash.getCurrentScore() / 1000) + 1;
